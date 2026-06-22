@@ -34,6 +34,7 @@ Document at least 3 bugs you found. Add rows as needed.
 - Give one example of an AI suggestion that was correct (including what the AI suggested and how you verified the result).
 => In the check_guess, Claude AI suggested me to swap 2 message that is correct but was put in wrong condition.
 - Give one example of an AI suggestion that was incorrect or misleading (including what the AI suggested and how you verified the result).
+=> Claude AI suggest many changes for efficiency, such as currentscore - penalty on line 81, but I intentionally want it to be there, because we before we print out final point for player, we have a condition that if score is less than 0, we display 0. This is not really necessary.
 
 ---
 
@@ -41,7 +42,8 @@ Document at least 3 bugs you found. Add rows as needed.
 
 - How did you decide whether a bug was really fixed?
 => I put in a print line to log out the guess versus the secret number with behavior
-- Describe at least one test you ran (manual or using pytest)  
+- Describe at least one test you ran (manual or using pytest) 
+  
   and what it showed you about your code.
 - Did AI help you design or understand any tests? How?
 
