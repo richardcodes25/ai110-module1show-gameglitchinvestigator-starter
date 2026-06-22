@@ -1,10 +1,6 @@
 import random
 
-from logic_utils import check_guess
-
-# The game logic currently lives in app.py (logic_utils.py is still stubbed),
-# so the regression tests below import the working implementation from there.
-from app import get_range_for_difficulty
+from logic_utils import check_guess, get_range_for_difficulty
 
 
 # --- Regression tests for the "New Game" out-of-range secret bug ---------------
@@ -44,16 +40,19 @@ def test_easy_secret_never_exceeds_its_max():
 
 
 def test_winning_guess():
-    # If the secret is 50 and guess is 50, it should be a win
-    result = check_guess(50, 50)
-    assert result == "Win"
+    # If the secret is 50 and guess is 50, it should be a win.
+    # check_guess returns a (outcome, message) tuple.
+    outcome, message = check_guess(50, 50)
+    assert outcome == "Win"
 
 def test_guess_too_high():
-    # If secret is 50 and guess is 60, hint should be "Too High"
-    result = check_guess(60, 50)
-    assert result == "Too High"
+    # Secret 50, guess 60 -> guess is above the secret, so the hint
+    # must tell the player to go LOWER.
+    outcome, message = check_guess(60, 50)
+    assert "LOWER" in message
 
 def test_guess_too_low():
-    # If secret is 50 and guess is 40, hint should be "Too Low"
-    result = check_guess(40, 50)
-    assert result == "Too Low"
+    # Secret 50, guess 40 -> guess is below the secret, so the hint
+    # must tell the player to go HIGHER.
+    outcome, message = check_guess(40, 50)
+    assert "HIGHER" in message
