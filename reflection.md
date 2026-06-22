@@ -14,16 +14,25 @@ Document at least 3 bugs you found. Add rows as needed.
 
 | Input | Expected Behavior | Actual Behavior | Console Output / Error |
 |-------|-------------------|-----------------|------------------------|
-| | | | |
-| | | | |
-| | | | |
+| 10    |   "Go HIGHER!"    |   "Go LOWER"    |Checking guess: 10 against secret: 50|
+| 50    |   "Go LOWER"      |   "Go HIGHER"   |Checking guess: 50 against secret: 23|
+| Click on "New Game" button| Restart game | Not resetting game state (stuck with previous game final state) | None |
+| After finish 1 game | Saving point after each game | Not saving point so far | Unless restart server, points will be keep track through matches |
+| Too High/Low condition for deducting point | Point taking away for each too high/low guess should not depend on odd/even number inputted | Point subtracting for each too high/low guess is currently depended on odd/even number inputted | |
+| Point calculating after attempt | If user guess exactly right on 1 attempt, they should not be deduct any point | User already be deduct 10 point from the first attempt | calculation should be 100 - 10*(attempt-1)|
+| Final point | Final point should not be negative | e.g: -35 | |
+| Difficulty | Range of Easy < Medium < Hard | Range of Easy < Hard < Normal | Normal is currently the hardest with the widest range, so we should swap it with Hard Level |
+| Random function for new game | Get the range based on current difficulty level | Hard code from 1-100 (not true for Easy and Medium level) ||
+| string-conversion hint bug | Everytime passing a number into check_guess function, secret is always an int. | in line ~199-202, on even-numbered attems, the secret number is converted into string before passed into check_guess. On odd, it stayed interger. | There is no reason for doing this, from my opinion|
 
 ---
 
 ## 2. How did you use AI as a teammate?
 
 - Which AI tools did you use on this project (for example: ChatGPT, Gemini, Copilot)?
+=> Claude
 - Give one example of an AI suggestion that was correct (including what the AI suggested and how you verified the result).
+=> In the check_guess, Claude AI suggested me to swap 2 message that is correct but was put in wrong condition.
 - Give one example of an AI suggestion that was incorrect or misleading (including what the AI suggested and how you verified the result).
 
 ---
@@ -31,6 +40,7 @@ Document at least 3 bugs you found. Add rows as needed.
 ## 3. Debugging and testing your fixes
 
 - How did you decide whether a bug was really fixed?
+=> I put in a print line to log out the guess versus the secret number with behavior
 - Describe at least one test you ran (manual or using pytest)  
   and what it showed you about your code.
 - Did AI help you design or understand any tests? How?
