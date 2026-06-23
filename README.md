@@ -33,13 +33,22 @@ It wrote the code, ran away, and now the game is unplayable.
 
 Describe your fixed game in numbered steps so a reader can follow along without watching a video:
 
-1. <!-- Describe this step --> User enters guess of 10
-2. <!-- Describe this step --> Game returns "Too Low"
-3. <!-- Describe this step --> User enters a guess of 70 → "Too High"
-4. <!-- Describe this step --> Score updates correctly after each guess
-5. <!-- Add more steps as needed --> Game ends after the correct guess
+1. <!-- Describe this step --> User selected Normal level (range: [1, 50]) (Secret number: 31)
+2. <!-- Describe this step --> 
+<img width="583" height="243" alt="Screenshot 2026-06-23 at 5 32 29 AM" src="https://github.com/user-attachments/assets/9f9d38ee-562b-4442-8858-2a25bb2c20b7" />
+
+3. <!-- Describe this step --> 
+<img width="587" height="248" alt="Screenshot 2026-06-23 at 5 34 55 AM" src="https://github.com/user-attachments/assets/6b261af7-548e-4406-b1bc-8cf4c589fb6f" />
+
+4. <!-- Describe this step --> Game returned Toow
+<img width="588" height="313" alt="Screenshot 2026-06-23 at 5 35 47 AM" src="https://github.com/user-attachments/assets/9cf03edb-a6d7-462c-b583-c5c8d992f24f" />
+
+5. <!-- Describe this step --> Score updates correctly after each guess
+6. <!-- Add more steps as needed --> Game ends after the correct guess. User can click on New Game button to open a new game.
 
 **Screenshot** *(optional)*: <!-- Insert a screenshot of your fixed, winning game here -->
+<img width="580" height="301" alt="Screenshot 2026-06-23 at 5 36 49 AM" src="https://github.com/user-attachments/assets/aea77fcf-075e-42e8-a194-00ec1b9cda91" />
+
 
 ## 🧪 Test Results
 
