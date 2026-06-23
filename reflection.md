@@ -34,7 +34,7 @@ Document at least 3 bugs you found. Add rows as needed.
 - Give one example of an AI suggestion that was correct (including what the AI suggested and how you verified the result).
 => In the check_guess, Claude AI suggested me to swap 2 message that is correct but was put in wrong condition.
 - Give one example of an AI suggestion that was incorrect or misleading (including what the AI suggested and how you verified the result).
-=> Claude AI suggest many changes for efficiency, such as currentscore - penalty on line 81, but I intentionally want it to be there, because we before we print out final point for player, we have a condition that if score is less than 0, we display 0. This is not really necessary.
+=> Claude AI suggest me to put in Easy - 20, Medium - 100, Hard - 50. This was more of misleading than a mistake, since it was intentionally put in the original code, which leads to the error of Claude AI here.
 
 ---
 
