@@ -197,3 +197,27 @@ def update_streak(current_streak: int, won: bool) -> int:
         int: ``current_streak + 1`` on a win, otherwise ``0``.
     """
     return current_streak + 1 if won else 0
+
+
+# Streak bonus: each consecutive win beyond the first adds points, up to a cap.
+STREAK_BONUS_PER_WIN = 5
+STREAK_BONUS_CAP = 25
+
+
+def streak_bonus(streak: int) -> int:
+    """Return the bonus points awarded for the current winning streak.
+
+    The first win of a streak earns nothing extra; each additional consecutive
+    win adds :data:`STREAK_BONUS_PER_WIN` points, capped at
+    :data:`STREAK_BONUS_CAP`. So a streak of 1 -> 0, 2 -> 5, 3 -> 10, ... and
+    it stops growing once the cap is reached.
+
+    Args:
+        streak: The current consecutive-win count (after this win).
+
+    Returns:
+        int: The streak bonus to add to the score (0 for a streak of 1 or less).
+    """
+    if streak <= 1:
+        return 0
+    return min(STREAK_BONUS_CAP, (streak - 1) * STREAK_BONUS_PER_WIN)

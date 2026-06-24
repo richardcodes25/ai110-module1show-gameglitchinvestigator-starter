@@ -76,7 +76,7 @@ Users can see the number they guessed, so that they can review and make a better
 <img width="498" height="121" alt="Screenshot 2026-06-23 at 9 23 47 PM" src="https://github.com/user-attachments/assets/d85c55f8-11b9-4fe1-91c9-7720abb99903" /> \
 
 - [x] New Feature 2: Streak of winning \
-Users can see their streak of winning, and they will get bonus point in the next round for how long streak they got. Image 2 below is the description of streak
+Users can see their winning streak (consecutive wins), and the longer the streak, the bigger the bonus points added to their score on each win (+5 per consecutive win, capped at +25). A loss resets the streak to 0. Image 2 below is the description of streak
 <img width="648" height="153" alt="Screenshot 2026-06-23 at 9 30 41 PM" src="https://github.com/user-attachments/assets/0efddb10-7dcd-4cfb-aa9d-fdf45a8a1f20" />
 <img width="346" height="95" alt="Screenshot 2026-06-23 at 9 33 09 PM" src="https://github.com/user-attachments/assets/196f84fd-2eae-4a3a-92ad-b87297716749" />
 

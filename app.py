@@ -10,6 +10,7 @@ from logic_utils import (
     time_bonus,
     format_duration,
     update_streak,
+    streak_bonus,
     PENALTY_MULTIPLIER,
 )
 
@@ -333,8 +334,8 @@ if st.session_state.get("celebrate_now"):
     st.balloons()
     st.success(
         f"⏱️ Solved in {format_duration(win['time'])} — "
-        f"speed bonus +{win['bonus']} → final score {win['score']}  "
-        f"🔥 Streak: {win['streak']}"
+        f"speed bonus +{win['bonus']}, streak bonus +{win.get('streak_bonus', 0)} "
+        f"→ final score {win['score']}  🔥 Streak: {win['streak']}"
     )
     celebration_dialog(
         name=win["name"],
@@ -537,12 +538,15 @@ if submit and not game_over:
             bonus = time_bonus(game_time)
             st.session_state.score += bonus
 
-            # Streak: a win extends the streak and may set a new best.
+            # Streak: a win extends the streak and may set a new best, and the
+            # longer the streak the bigger the streak bonus added to the score.
             st.session_state.streak = update_streak(st.session_state.streak, True)
             st.session_state.best_streak = max(
                 st.session_state.best_streak,
                 st.session_state.streak,
             )
+            s_bonus = streak_bonus(st.session_state.streak)
+            st.session_state.score += s_bonus
 
             st.session_state.status = "won"
             st.session_state.match_history.append({
@@ -563,6 +567,7 @@ if submit and not game_over:
                 "score": st.session_state.score,
                 "time": game_time,
                 "bonus": bonus,
+                "streak_bonus": s_bonus,
                 "streak": st.session_state.streak,
             }
             # Defer the celebration to the next run and rerun now, so the guess

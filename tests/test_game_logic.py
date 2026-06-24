@@ -8,6 +8,7 @@ from logic_utils import (
     time_bonus,
     format_duration,
     update_streak,
+    streak_bonus,
 )
 
 
@@ -117,6 +118,27 @@ def test_update_streak_increments_on_win():
 def test_update_streak_resets_on_loss():
     assert update_streak(7, False) == 0
     assert update_streak(0, False) == 0
+
+
+# --- Streak bonus: longer streaks earn more (capped) -------------------------
+
+def test_streak_bonus_zero_for_first_win():
+    # A streak of 1 (or 0) earns no bonus yet.
+    assert streak_bonus(0) == 0
+    assert streak_bonus(1) == 0
+
+
+def test_streak_bonus_grows_per_consecutive_win():
+    # +5 for each win beyond the first.
+    assert streak_bonus(2) == 5
+    assert streak_bonus(3) == 10
+    assert streak_bonus(4) == 15
+
+
+def test_streak_bonus_is_capped():
+    # Stops growing once the +25 cap is reached (streak 6 -> 25, and beyond).
+    assert streak_bonus(6) == 25
+    assert streak_bonus(50) == 25
 
 
 # --- Scoring: penalties never push the score below zero ----------------------
