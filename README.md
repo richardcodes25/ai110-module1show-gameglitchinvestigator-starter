@@ -35,19 +35,17 @@ Describe your fixed game in numbered steps so a reader can follow along without 
 
 1. <!-- Describe this step --> User selected Normal level (range: [1, 50]) (Secret number: 31)
 2. <!-- Describe this step --> 
-<img width="583" height="243" alt="Screenshot 2026-06-23 at 5 32 29 AM" src="https://github.com/user-attachments/assets/9f9d38ee-562b-4442-8858-2a25bb2c20b7" />
+<img width="593" height="405" alt="Screenshot 2026-06-23 at 9 17 10 PM" src="https://github.com/user-attachments/assets/ce503848-9764-4e4d-9576-c75a7b64737c" />
+
 
 3. <!-- Describe this step --> 
-<img width="587" height="248" alt="Screenshot 2026-06-23 at 5 34 55 AM" src="https://github.com/user-attachments/assets/6b261af7-548e-4406-b1bc-8cf4c589fb6f" />
+<img width="578" height="401" alt="Screenshot 2026-06-23 at 9 18 59 PM" src="https://github.com/user-attachments/assets/b4e0f86a-8a61-462c-b1a6-ce24c6e6ff24" />
 
-4. <!-- Describe this step --> Game returned Toow
-<img width="588" height="313" alt="Screenshot 2026-06-23 at 5 35 47 AM" src="https://github.com/user-attachments/assets/9cf03edb-a6d7-462c-b583-c5c8d992f24f" />
+4. <!-- Describe this step --> Score updates correctly after each guess
+5. <!-- Add more steps as needed --> Game ends after the correct guess. User can click on New Game button to open a new game.
 
-5. <!-- Describe this step --> Score updates correctly after each guess
-6. <!-- Add more steps as needed --> Game ends after the correct guess. User can click on New Game button to open a new game.
-
-**Screenshot** *(optional)*: <!-- Insert a screenshot of your fixed, winning game here -->
-<img width="580" height="301" alt="Screenshot 2026-06-23 at 5 36 49 AM" src="https://github.com/user-attachments/assets/aea77fcf-075e-42e8-a194-00ec1b9cda91" />
+**Screenshot** *(optional)*: <!-- Insert a screenshot of your fixed, winning game here --> \
+<img width="602" height="362" alt="Screenshot 2026-06-23 at 9 19 27 PM" src="https://github.com/user-attachments/assets/294de005-b92a-4f9a-b7e9-a515a2580e14" />
 
 
 ## 🧪 Test Results
@@ -57,8 +55,35 @@ Describe your fixed game in numbered steps so a reader can follow along without 
 # pytest tests/
 # ========================= X passed in 0.XXs =========================
 ```
-<img width="1194" height="170" alt="Screenshot 2026-06-22 at 3 45 21 PM" src="https://github.com/user-attachments/assets/ccfa5c3b-c59f-49b8-937f-4fc04d4f27a0" />
+<img width="1252" height="487" alt="Screenshot 2026-06-23 at 9 21 10 PM" src="https://github.com/user-attachments/assets/ce6258fa-c112-44ed-a3f3-d035276eef29" />
+
 
 ## 🚀 Stretch Features
 
-- [ ] [If you choose to complete Challenge 4, describe the Enhanced UI changes here — a screenshot is optional]
+- [x] [If you choose to complete Challenge 4, describe the Enhanced UI changes here — a screenshot is optional] \
+Below are new design of Game Glitches Investigator (new name: GuessMaster).
+<img width="1468" height="702" alt="Screenshot 2026-06-23 at 9 21 48 PM" src="https://github.com/user-attachments/assets/49998846-d328-473d-80f4-721d220c0566" />
+
+<img width="1470" height="761" alt="Screenshot 2026-06-23 at 9 22 08 PM" src="https://github.com/user-attachments/assets/27b0f855-a05f-483d-b064-281767ace690" />
+
+Winning animation: \
+<img width="449" height="427" alt="Screenshot 2026-06-23 at 9 38 26 PM" src="https://github.com/user-attachments/assets/f3ba2eb9-5df2-44b4-8571-a53d78088f91" />
+
+
+- [x] New Feature 1: Recent Guess of each match \
+Users can see the number they guessed, so that they can review and make a better decision on next attempt (No repeat guess). If user check the hints box, they will see arrow up and down, so that they can know whether secret number is lower or higher than the guess number.
+<img width="498" height="121" alt="Screenshot 2026-06-23 at 9 23 47 PM" src="https://github.com/user-attachments/assets/d85c55f8-11b9-4fe1-91c9-7720abb99903" /> \
+
+- [x] New Feature 2: Streak of winning \
+Users can see their streak of winning, and they will get bonus point in the next round for how long streak they got. Image 2 below is the description of streak
+<img width="648" height="153" alt="Screenshot 2026-06-23 at 9 30 41 PM" src="https://github.com/user-attachments/assets/0efddb10-7dcd-4cfb-aa9d-fdf45a8a1f20" />
+<img width="346" height="95" alt="Screenshot 2026-06-23 at 9 33 09 PM" src="https://github.com/user-attachments/assets/196f84fd-2eae-4a3a-92ad-b87297716749" />
+
+- [x] New Feature 3: Timer of each round \
+Users got time counting for their match.
+<img width="560" height="144" alt="Screenshot 2026-06-23 at 9 34 24 PM" src="https://github.com/user-attachments/assets/e96fc899-a1e0-404a-ba9b-2028bc5f3a9c" />
+
+- [x] New feature 4: Carousel of match history \
+User can click on left\right button to see history of matches of guessing. These include Score, How many attempts took, Secret number, Level of difficulty, Time usage, and Streak (if possible)
+<img width="631" height="473" alt="Screenshot 2026-06-23 at 9 35 17 PM" src="https://github.com/user-attachments/assets/f5074c3f-bd3a-4673-b68c-bfa70ebcf1c1" />
+
