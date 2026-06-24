@@ -55,7 +55,8 @@ Describe your fixed game in numbered steps so a reader can follow along without 
 # pytest tests/
 # ========================= X passed in 0.XXs =========================
 ```
-<img width="1252" height="487" alt="Screenshot 2026-06-23 at 9 21 10 PM" src="https://github.com/user-attachments/assets/ce6258fa-c112-44ed-a3f3-d035276eef29" />
+<img width="1458" height="343" alt="Screenshot 2026-06-24 at 1 29 17 AM" src="https://github.com/user-attachments/assets/78c7c694-138f-44a4-9a13-4aec7ab7bb18" />
+
 
 
 ## 🚀 Stretch Features
