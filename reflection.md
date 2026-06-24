@@ -46,13 +46,16 @@ Document at least 3 bugs you found. Add rows as needed.
 - Describe at least one test you ran (manual or using pytest) 
   
   and what it showed you about your code.
+=> I ran `pytest` on `tests/test_game_logic.py`. The test `test_score_never_goes_negative` checks that a wrong guess cannot push the score below 0; it failed before I added the `max(0, ...)` floor in `update_score`, then passed after the fix. Another test, `test_easy_secret_never_exceeds_its_max`, generates 1000 Easy secrets and asserts none go above 20, which confirmed the difficulty-range fix. By the end the suite grew to 35 tests, all passing, so I was confident the fixes worked together and didn't break each other.
 - Did AI help you design or understand any tests? How?
+=> Yes. AI suggested edge cases I had not thought of, such as rejecting whole-looking decimals like "10.0", checking the time-bonus tiers exactly on their boundaries (10s, 20s), and clamping negative or float durations in the timer. It also explained why each case mattered, which helped me understand the expected contract of each function instead of just copying tests blindly.
 
 ---
 
 ## 4. What did you learn about Streamlit and state?
 
 - How would you explain Streamlit "reruns" and session state to a friend who has never used Streamlit?
+=> Streamlit re-runs the entire script from top to bottom every single time you interact with the app — clicking a button, typing a guess, or changing the difficulty. Because of that, any normal Python variable is recreated from scratch on each run, so the app "forgets" everything between interactions. `st.session_state` is a special dictionary that survives those reruns — it is basically the app's memory. Many of the original bugs (the secret number changing on every submit, the score resetting, New Game not working) came from values that were not stored in session state, or were being reset in the wrong place.
 
 ---
 
@@ -60,5 +63,8 @@ Document at least 3 bugs you found. Add rows as needed.
 
 - What is one habit or strategy from this project that you want to reuse in future labs or projects?
   - This could be a testing habit, a prompting strategy, or a way you used Git.
+=> Moving the core logic into a separate, pure module (`logic_utils.py`) and writing pytest tests for it. Keeping the logic out of the UI made each function easy to test in isolation, and the tests caught regressions whenever I changed the scoring, validation, or difficulty rules.
 - What is one thing you would do differently next time you work with AI on a coding task?
+=> I would verify AI-generated code more carefully before trusting it, especially UI code — I'd run it right away and read it line by line. In this project ChatGPT once gave me a block that rendered as raw HTML, and Claude suggested difficulty ranges that were actually wrong, so giving the AI clearer context up front and checking its output would have saved time.
 - In one or two sentences, describe how this project changed the way you think about AI generated code.
+=> I now treat AI-generated code as a fast first draft, not a finished answer. It is usually right in structure but can hide subtle logic bugs, so I always test and review it myself before relying on it.
