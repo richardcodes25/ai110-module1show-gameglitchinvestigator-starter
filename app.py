@@ -87,6 +87,7 @@ if not st.session_state.player_name:
     ask_name()
 
 
+
 def celebrate_win(name: str, secret: int, score: int, attempts: int):
     """Render a custom confetti + animated trophy banner for a win."""
     import streamlit.components.v1 as components
@@ -98,14 +99,17 @@ def celebrate_win(name: str, secret: int, score: int, attempts: int):
           <div class="trophy">🏆</div>
           <div class="headline">👑 GuessMaster Victory!</div>
 
-        <div style="font-size:20px; margin-top:10px;">
-            Congratulations, {safe_name}!
-        </div>
-          <div class="stats">
-            Secret was <b>{secret}</b> &nbsp;•&nbsp;
-            Solved in <b>{attempts}</b> {"try" if attempts == 1 else "tries"} &nbsp;•&nbsp;
-            Score <b>{score}</b>
-          </div>
+            <div style="
+                font-size:24px;
+                margin-top:12px;
+                font-weight:800;
+                background: linear-gradient(90deg,#FFD700,#FFB347,#FFD700);
+                -webkit-background-clip:text;
+                background-clip:text;
+                color:transparent;
+            ">
+                Congratulations, {safe_name}! 🎉
+            </div>
         </div>
         <div id="confetti"></div>
         <style>
@@ -129,7 +133,6 @@ def celebrate_win(name: str, secret: int, score: int, attempts: int):
             color: transparent;
             animation: shine 2s linear infinite;
           }}
-          .stats {{ font-size: 15px; color: #444; margin-top: 6px; }}
           @keyframes pop {{ from {{ transform: scale(0); opacity: 0; }} to {{ transform: scale(1); opacity: 1; }} }}
           @keyframes bounce {{ 0%,100% {{ transform: translateY(0); }} 50% {{ transform: translateY(-14px); }} }}
           @keyframes shine {{ to {{ background-position: 200% center; }} }}
@@ -156,6 +159,70 @@ def celebrate_win(name: str, secret: int, score: int, attempts: int):
         </script>
         """,
         height=220,
+    )
+
+def guess_feedback(message: str, show_hint: bool):
+    """Animated banner for a wrong guess.
+
+    The higher/lower direction (``message``) is only revealed when hints are
+    enabled. With hints off the player only learns the guess was wrong.
+    """
+    import streamlit.components.v1 as components
+
+    detail = message if show_hint else "Keep going — you'll crack it!"
+    components.html(
+        f"""
+        <div class="fb-banner">
+          <div class="fb-emoji">❌</div>
+          <div class="fb-title">Not quite!</div>
+          <div class="fb-detail">{detail}</div>
+        </div>
+        <style>
+          .fb-banner {{
+            font-family: system-ui, sans-serif;
+            text-align: center;
+            background: linear-gradient(135deg,#ff5858,#f857a6);
+            color: white;
+            padding: 16px;
+            border-radius: 14px;
+            animation: shake 0.5s ease;
+          }}
+          .fb-emoji {{ font-size: 42px; }}
+          .fb-title {{ font-size: 24px; font-weight: 800; margin-top: 2px; }}
+          .fb-detail {{ font-size: 17px; margin-top: 6px; opacity: 0.95; }}
+          @keyframes shake {{
+            0%,100% {{ transform: translateX(0); }}
+            20% {{ transform: translateX(-10px); }}
+            40% {{ transform: translateX(10px); }}
+            60% {{ transform: translateX(-8px); }}
+            80% {{ transform: translateX(8px); }}
+          }}
+        </style>
+        """,
+        height=150,
+    )
+
+
+@st.dialog("🏆 GuessMaster Champion")
+def celebration_dialog(name, secret, attempts, score):
+
+    celebrate_win(
+        name=name,
+        secret=secret,
+        score=score,
+        attempts=attempts,
+    )
+
+    st.markdown(
+        f"""
+        ### 🎉 Victory Statistics
+
+        🎯 **Secret Number:** {secret}
+
+        ⏱ **Attempts:** {attempts}
+
+        🏆 **Score:** {score}
+        """
     )
 
 st.markdown(
@@ -201,6 +268,9 @@ low, high = get_range_for_difficulty(difficulty)
 st.sidebar.metric("Range", f"{low} - {high}")
 st.sidebar.metric("Max Attempts", attempt_limit)
 
+if "match_history" not in st.session_state:
+    st.session_state.match_history = []
+
 if "secret" not in st.session_state:
     st.session_state.secret = random.randint(low, high)
 
@@ -220,6 +290,12 @@ if "history" not in st.session_state:
 
 if "difficulty" not in st.session_state:
     st.session_state.difficulty = difficulty
+
+if "history_index" not in st.session_state:
+    st.session_state.history_index = 0
+
+if "last_win" not in st.session_state:
+    st.session_state.last_win = None
 
 score_col, attempt_col, remain_col = st.columns(3)
 
@@ -310,14 +386,18 @@ if new_game:
     st.success("New game started.")
     st.rerun()
 
-if st.session_state.status != "playing":
+# Game-over notice. We DON'T st.stop() here -- stopping would skip everything
+# below (Recent Guesses + the Match History carousel), so paging the carousel
+# after a win/loss would wipe the page back to just this banner. Instead we
+# only block processing of NEW guesses while keeping the rest of the page alive.
+game_over = st.session_state.status != "playing"
+if game_over:
     if st.session_state.status == "won":
         st.success("You already won. Start a new game to play again.")
     else:
         st.error("Game over. Start a new game to try again.")
-    st.stop()
 
-if submit:
+if submit and not game_over:
     st.session_state.attempts += 1
 
     ok, guess_int, err = parse_guess(raw_guess)
@@ -336,9 +416,6 @@ if submit:
         secret = st.session_state.secret
 
         outcome, message = check_guess(guess_int, secret)
-
-        if show_hint:
-            st.warning(message)
 
         # FIXME: We pass the INTEGER secret (st.session_state.secret), not the local
         # `secret` above which becomes a string on even attempts -- abs(guess - secret)
@@ -360,7 +437,31 @@ if submit:
                 score=st.session_state.score,
                 attempts=st.session_state.attempts,
             )
+            st.session_state.match_history.append({
+                "result": "WIN",
+                "difficulty": difficulty,
+                "attempts": st.session_state.attempts,
+                "secret": st.session_state.secret,
+                "score": st.session_state.score,
+            })
+            # Show the newest game in the carousel.
+            st.session_state.history_index = len(st.session_state.match_history) - 1
+            st.session_state.last_win = {
+                "name": st.session_state.player_name,
+                "secret": st.session_state.secret,
+                "attempts": st.session_state.attempts,
+                "score": st.session_state.score,
+            }
+            celebration_dialog(
+                name=st.session_state.player_name,
+                secret=st.session_state.secret,
+                attempts=st.session_state.attempts,
+                score=st.session_state.score,
+            )
         else:
+            # Always give wrong-answer feedback. Direction only when hints are on.
+            guess_feedback(message, show_hint)
+
             if st.session_state.attempts >= attempt_limit:
                 st.session_state.status = "lost"
                 st.error(
@@ -368,6 +469,17 @@ if submit:
                     f"The secret was {st.session_state.secret}. "
                     f"Score: {st.session_state.score}"
                 )
+                # Record the FINAL game result only when the game actually ends.
+                st.session_state.match_history.append({
+                    "result": "LOSS",
+                    "difficulty": difficulty,
+                    "attempts": st.session_state.attempts,
+                    "secret": st.session_state.secret,
+                    "score": st.session_state.score,
+                })
+                # Show the newest game in the carousel.
+                st.session_state.history_index = len(st.session_state.match_history) - 1
+
 if st.session_state.history:
 
     st.divider()
@@ -384,6 +496,74 @@ if st.session_state.history:
             guess,
         )
 
+st.divider()
+
+st.subheader("📜 Match History")
+
+if not st.session_state.match_history:
+
+    st.markdown("""
+    <div style="
+        height:180px;
+        border-radius:15px;
+        border:2px dashed #ccc;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:20px;
+        color:gray;
+        background:white;
+    ">
+        No History Played Yet
+    </div>
+    """, unsafe_allow_html=True)
+
+else:
+    current = st.session_state.match_history[
+        st.session_state.history_index
+    ]
+
+    color = "#22c55e" if current["result"] == "WIN" else "#ef4444"
+
+    st.markdown(
+        f"""
+<div style="background:white; padding:25px; border-radius:16px; box-shadow:0 4px 12px rgba(0,0,0,.1); min-height:220px;">
+<h2 style="color:{color}; margin:0;">{current["result"]}</h2>
+<h3 style="color:#333;">Score: {current["score"]}</h3>
+<hr>
+<p style="color:#333;">🎯 Attempts: {current["attempts"]}</p>
+<p style="color:#333;">🔢 Secret Number: {current["secret"]}</p>
+<p style="color:#333;">⚙️ Difficulty: {current["difficulty"]}</p>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+    last_index = len(st.session_state.match_history) - 1
+    at_start = st.session_state.history_index <= 0
+    at_end = st.session_state.history_index >= last_index
+
+    left, spacer, right = st.columns([1,5,1])
+
+    with left:
+        # Disable when already at the oldest game; re-enables once there's
+        # an older game to move back to.
+        if st.button("⬅️", disabled=at_start):
+            st.session_state.history_index = max(
+                0,
+                st.session_state.history_index - 1
+            )
+            st.rerun()
+
+    with right:
+        # Disable when already at the newest game; re-enables once there's
+        # a newer game to move forward to.
+        if st.button("➡️", disabled=at_end):
+            st.session_state.history_index = min(
+                last_index,
+                st.session_state.history_index + 1
+            )
+            st.rerun()
 # Footer
 st.divider()
 

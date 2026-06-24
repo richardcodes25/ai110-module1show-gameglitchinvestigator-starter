@@ -30,11 +30,12 @@ Document at least 3 bugs you found. Add rows as needed.
 ## 2. How did you use AI as a teammate?
 
 - Which AI tools did you use on this project (for example: ChatGPT, Gemini, Copilot)?
-=> Claude
+=> Claude, ChatGPT
 - Give one example of an AI suggestion that was correct (including what the AI suggested and how you verified the result).
 => In the check_guess, Claude AI suggested me to swap 2 message that is correct but was put in wrong condition.
 - Give one example of an AI suggestion that was incorrect or misleading (including what the AI suggested and how you verified the result).
-=> Claude AI suggest me to put in Easy - 20, Medium - 100, Hard - 50. This was more of misleading than a mistake, since it was intentionally put in the original code, which leads to the error of Claude AI here.
+=> Logic error: Claude AI suggest me to put in Easy - 20, Medium - 100, Hard - 50. This was more of misleading than a mistake, since it was intentionally put in the original code, which leads to the error of Claude AI here.
+=> Coding error: ChatGPT provided a block of code to display history of matches, but it displayed as raw HTML code intead.
 
 ---
 
