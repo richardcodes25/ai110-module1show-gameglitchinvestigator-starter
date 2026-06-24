@@ -1,4 +1,5 @@
 import random
+import time
 import streamlit as st
 
 from logic_utils import (
@@ -6,6 +7,10 @@ from logic_utils import (
     parse_guess,
     check_guess,
     update_score,
+    time_bonus,
+    format_duration,
+    update_streak,
+    PENALTY_MULTIPLIER,
 )
 
 st.set_page_config(
@@ -78,13 +83,18 @@ def ask_name():
     if st.button("Let's go 🚀"):
         if name.strip():
             st.session_state.player_name = name.strip()
+            # Start the game clock now -- the game begins once the name is in.
+            st.session_state.start_time = time.time()
             st.rerun()
         else:
             st.warning("Please enter a name to continue.")
 
 
+# Gate the whole app on having a name: until one is entered we only show the
+# dialog and stop here, so the timer never starts counting during name entry.
 if not st.session_state.player_name:
     ask_name()
+    st.stop()
 
 
 
@@ -268,6 +278,11 @@ low, high = get_range_for_difficulty(difficulty)
 st.sidebar.metric("Range", f"{low} - {high}")
 st.sidebar.metric("Max Attempts", attempt_limit)
 
+# Let the player know Hard deducts more per wrong guess.
+penalty_multiplier = PENALTY_MULTIPLIER.get(difficulty, 1)
+if penalty_multiplier > 1:
+    st.sidebar.caption(f"⚠️ {difficulty}: wrong guesses cost {penalty_multiplier}× points")
+
 if "match_history" not in st.session_state:
     st.session_state.match_history = []
 
@@ -280,6 +295,7 @@ if "attempts" not in st.session_state:
     st.session_state.attempts = 0
 
 if "score" not in st.session_state:
+    # Score accumulates from 0 and is revealed only when the game ends.
     st.session_state.score = 0
 
 if "status" not in st.session_state:
@@ -297,10 +313,65 @@ if "history_index" not in st.session_state:
 if "last_win" not in st.session_state:
     st.session_state.last_win = None
 
+# Timed mode: when the current game started, and the final time of the last
+# finished game (frozen so the timer stops once the game is over).
+if "start_time" not in st.session_state:
+    st.session_state.start_time = time.time()
+
+if "last_game_time" not in st.session_state:
+    st.session_state.last_game_time = None
+
+# A win defers its celebration to the run AFTER the winning guess (see the win
+# handler). By now the guess box is already emptied and disabled, so the win is
+# shown over a locked board. This is a one-shot flag, cleared once celebrated.
+if st.session_state.get("celebrate_now"):
+    st.session_state.celebrate_now = False
+    win = st.session_state.last_win
+    # Balloons fire exactly once here (one-shot flag). The confetti banner is
+    # rendered by celebration_dialog below -- don't also call celebrate_win()
+    # on the page, or the effect would play twice.
+    st.balloons()
+    st.success(
+        f"⏱️ Solved in {format_duration(win['time'])} — "
+        f"speed bonus +{win['bonus']} → final score {win['score']}  "
+        f"🔥 Streak: {win['streak']}"
+    )
+    celebration_dialog(
+        name=win["name"],
+        secret=win["secret"],
+        attempts=win["attempts"],
+        score=win["score"],
+    )
+
+# Streak tracking: consecutive wins, plus the best streak this session.
+if "streak" not in st.session_state:
+    st.session_state.streak = 0
+
+if "best_streak" not in st.session_state:
+    st.session_state.best_streak = 0
+
+@st.fragment(run_every=1)
+def render_game_timer():
+    """Live game timer.
+
+    Counts the whole time from the start of the game and ticks up every second
+    while the game is in progress; freezes at the final time once the game is
+    over.
+    """
+    if st.session_state.status == "playing":
+        seconds = time.time() - st.session_state.start_time
+    else:
+        seconds = st.session_state.last_game_time or 0
+    st.metric("⏱️ Time", format_duration(seconds))
+
+
 score_col, attempt_col, remain_col = st.columns(3)
 
 with score_col:
-    st.metric("🏆 Score", st.session_state.score)
+    # Hide the running score during play -- show 0 until the game ends, then
+    # reveal the final score for that match.
+    display_score = st.session_state.score if st.session_state.status != "playing" else 0
+    st.metric("🏆 Score", display_score)
 
 with attempt_col:
     st.metric("🎯 Attempts", st.session_state.attempts)
@@ -310,6 +381,17 @@ with remain_col:
         "⏳ Remaining",
         max(0, attempt_limit - st.session_state.attempts)
     )
+
+time_col, streak_col, best_col = st.columns(3)
+
+with time_col:
+    render_game_timer()
+
+with streak_col:
+    st.metric("🔥 Streak", st.session_state.streak)
+
+with best_col:
+    st.metric("🏅 Best Streak", st.session_state.best_streak)
 
 # FIXME: Changing difficulty used to update the range caption but keep the OLD secret
 # (the secret was only generated once). Now we detect the change and start a fresh
@@ -321,6 +403,8 @@ if difficulty != st.session_state.difficulty:
     st.session_state.score = 0
     st.session_state.status = "playing"
     st.session_state.history = []
+    st.session_state.start_time = time.time()
+    st.session_state.last_game_time = None
     st.rerun()
 
 st.markdown("## 🔢 Make Your Guess")
@@ -344,6 +428,14 @@ with st.expander("Developer Debug Info"):
     st.write("Difficulty:", difficulty)
     st.write("History:", st.session_state.history)
 
+# Once the game is over the guess box is emptied and disabled until the player
+# starts a New Game. Deleting the stored value BEFORE the widget is created is
+# what makes it render empty (you can't clear a widget after it's drawn).
+is_playing = st.session_state.status == "playing"
+guess_key = f"guess_input_{difficulty}"
+if not is_playing and guess_key in st.session_state:
+    del st.session_state[guess_key]
+
 # FIXME: A plain text_input + st.button meant pressing Enter did nothing; you had to
 # click Submit. Wrapping the input and submit button in st.form makes Enter submit too.
 with st.container(border=True):
@@ -353,12 +445,14 @@ with st.container(border=True):
         raw_guess = st.text_input(
             "Enter your guess",
             placeholder=f"Pick a number from {low} to {high}",
-            key=f"guess_input_{difficulty}",
+            key=guess_key,
+            disabled=not is_playing,
         )
 
         submit = st.form_submit_button(
             "🚀 Submit Guess",
             use_container_width=True,
+            disabled=not is_playing,
         )
 
 col2, col3 = st.columns([2, 1])
@@ -379,6 +473,9 @@ if new_game:
     st.session_state.status = "playing"
     st.session_state.score = 0
     st.session_state.history = []
+    # Restart the game clock for timed mode.
+    st.session_state.start_time = time.time()
+    st.session_state.last_game_time = None
     # Clear the guess box so the new game starts with an empty input.
     guess_key = f"guess_input_{difficulty}"
     if guess_key in st.session_state:
@@ -395,7 +492,11 @@ if game_over:
     if st.session_state.status == "won":
         st.success("You already won. Start a new game to play again.")
     else:
-        st.error("Game over. Start a new game to try again.")
+        st.error(
+            f"💀 Game over! The secret was {st.session_state.secret}. "
+            f"Final score: {st.session_state.score}. "
+            f"Click New Game to play again."
+        )
 
 if submit and not game_over:
     st.session_state.attempts += 1
@@ -426,23 +527,32 @@ if submit and not game_over:
             attempt_number=st.session_state.attempts,
             guess=guess_int,
             secret=st.session_state.secret,
+            difficulty=difficulty,
         )
 
         if outcome == "Win":
-            st.balloons()
-            st.session_state.status = "won"
-            celebrate_win(
-                name=st.session_state.player_name,
-                secret=st.session_state.secret,
-                score=st.session_state.score,
-                attempts=st.session_state.attempts,
+            # Timed mode: freeze the clock and add a decaying speed bonus.
+            game_time = time.time() - st.session_state.start_time
+            st.session_state.last_game_time = game_time
+            bonus = time_bonus(game_time)
+            st.session_state.score += bonus
+
+            # Streak: a win extends the streak and may set a new best.
+            st.session_state.streak = update_streak(st.session_state.streak, True)
+            st.session_state.best_streak = max(
+                st.session_state.best_streak,
+                st.session_state.streak,
             )
+
+            st.session_state.status = "won"
             st.session_state.match_history.append({
                 "result": "WIN",
                 "difficulty": difficulty,
                 "attempts": st.session_state.attempts,
                 "secret": st.session_state.secret,
                 "score": st.session_state.score,
+                "time": game_time,
+                "streak": st.session_state.streak,
             })
             # Show the newest game in the carousel.
             st.session_state.history_index = len(st.session_state.match_history) - 1
@@ -451,24 +561,22 @@ if submit and not game_over:
                 "secret": st.session_state.secret,
                 "attempts": st.session_state.attempts,
                 "score": st.session_state.score,
+                "time": game_time,
+                "bonus": bonus,
+                "streak": st.session_state.streak,
             }
-            celebration_dialog(
-                name=st.session_state.player_name,
-                secret=st.session_state.secret,
-                attempts=st.session_state.attempts,
-                score=st.session_state.score,
-            )
+            # Defer the celebration to the next run and rerun now, so the guess
+            # box is already emptied and disabled by the time the win is shown.
+            st.session_state.celebrate_now = True
+            st.rerun()
         else:
-            # Always give wrong-answer feedback. Direction only when hints are on.
-            guess_feedback(message, show_hint)
-
             if st.session_state.attempts >= attempt_limit:
+                # Timed mode: freeze the clock. Streak: a loss resets it to 0.
+                game_time = time.time() - st.session_state.start_time
+                st.session_state.last_game_time = game_time
+                st.session_state.streak = update_streak(st.session_state.streak, False)
+
                 st.session_state.status = "lost"
-                st.error(
-                    f"Out of attempts! "
-                    f"The secret was {st.session_state.secret}. "
-                    f"Score: {st.session_state.score}"
-                )
                 # Record the FINAL game result only when the game actually ends.
                 st.session_state.match_history.append({
                     "result": "LOSS",
@@ -476,9 +584,18 @@ if submit and not game_over:
                     "attempts": st.session_state.attempts,
                     "secret": st.session_state.secret,
                     "score": st.session_state.score,
+                    "time": game_time,
+                    "streak": st.session_state.streak,
                 })
                 # Show the newest game in the carousel.
                 st.session_state.history_index = len(st.session_state.match_history) - 1
+                # Rerun so the now-finished game empties and disables the guess
+                # box. The game-over banner above shows the result details.
+                st.rerun()
+            else:
+                # Game continues: show the wrong-answer feedback (direction only
+                # when hints are on).
+                guess_feedback(message, show_hint)
 
 if st.session_state.history:
 
@@ -490,10 +607,25 @@ if st.session_state.history:
 
     cols = st.columns(min(5, len(history)))
 
+    secret_value = st.session_state.secret
+
     for idx, guess in enumerate(history):
-        cols[idx % len(cols)].metric(
-            f"#{len(st.session_state.history) - idx}",
-            guess,
+        num = len(st.session_state.history) - idx
+
+        # When hints are on, show a direction arrow for each numeric guess:
+        # green ↑ if the secret is higher (guess too low), red ↓ if the secret
+        # is lower (guess too high). Direction only -- no distance revealed.
+        arrow = ""
+        if show_hint and isinstance(guess, int) and guess != secret_value:
+            if guess < secret_value:
+                arrow = " <span style='color:#22c55e;'>↑</span>"
+            else:
+                arrow = " <span style='color:#ef4444;'>↓</span>"
+
+        cols[idx % len(cols)].markdown(
+            f"<div style='color:#888; font-size:0.8rem;'>#{num}</div>"
+            f"<div style='font-size:1.7rem; font-weight:600;'>{guess}{arrow}</div>",
+            unsafe_allow_html=True,
         )
 
 st.divider()
@@ -524,6 +656,9 @@ else:
     ]
 
     color = "#22c55e" if current["result"] == "WIN" else "#ef4444"
+    # Older history entries (saved before timed/streak mode) may lack these keys.
+    time_text = format_duration(current["time"]) if current.get("time") is not None else "—"
+    streak_text = current.get("streak", "—")
 
     st.markdown(
         f"""
@@ -534,6 +669,8 @@ else:
 <p style="color:#333;">🎯 Attempts: {current["attempts"]}</p>
 <p style="color:#333;">🔢 Secret Number: {current["secret"]}</p>
 <p style="color:#333;">⚙️ Difficulty: {current["difficulty"]}</p>
+<p style="color:#333;">⏱️ Time: {time_text}</p>
+<p style="color:#333;">🔥 Streak after game: {streak_text}</p>
 </div>
 """,
         unsafe_allow_html=True,
